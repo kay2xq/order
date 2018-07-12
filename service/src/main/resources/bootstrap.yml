@@ -12,3 +12,6 @@ spring:
         product_stock:
           group: order
           content-type: application/json
+  redis:
+    host: 192.168.1.113
+    port: 6379
