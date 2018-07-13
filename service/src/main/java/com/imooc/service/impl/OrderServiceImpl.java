@@ -5,6 +5,8 @@ import com.imooc.dataobject.OrderMaster;
 import com.imooc.dto.OrderDTO;
 import com.imooc.enums.OrderStatusEnum;
 import com.imooc.enums.PayStatusEnum;
+import com.imooc.enums.ResultEnum;
+import com.imooc.exception.OrderException;
 import com.imooc.product.DecreaseStockInput;
 import com.imooc.product.ProductClient;
 import com.imooc.product.ProductInfoOutput;
@@ -16,10 +18,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal orderAmount = new BigDecimal(BigInteger.ZERO);
         List<ProductInfoOutput> productInfoList = productClient.findByProductIdIn(productIds);
+
         for (ProductInfoOutput product : productInfoList) {
             for (OrderDetail orderDetail : orderDetailList) {
                 if (product.getProductId().equals(orderDetail.getProductId())) {
@@ -76,6 +81,33 @@ public class OrderServiceImpl implements OrderService {
         orderMaster.setOrderStatus(OrderStatusEnum.NEW.getCode());
         orderMaster.setPayStatus(PayStatusEnum.WAIT.getCode());
         orderMasterRepository.save(orderMaster);
+        return orderDTO;
+    }
+
+    @Override
+    public OrderDTO finish(String orderId) {
+        Optional<OrderMaster> orderOptional = orderMasterRepository.findById(orderId);
+        if (!orderOptional.isPresent()){
+            throw new OrderException(ResultEnum.ORDER_NOT_EXIT);
+        }
+        OrderMaster orderMaster = orderOptional.get();
+        if (orderMaster.getOrderStatus() != OrderStatusEnum.NEW.getCode()){
+            throw new OrderException(ResultEnum.ORDER_STATUS_ERROR);
+        }
+
+        //查询订单详情信息
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
+        if (CollectionUtils.isEmpty(orderDetails)){
+            throw new OrderException(ResultEnum.ORDER_DETAIL_ERROR);
+        }
+
+        //将订单状态调整为已完成
+        orderMaster.setOrderStatus(OrderStatusEnum.FINISHED.getCode());
+        orderMasterRepository.save(orderMaster);
+
+        OrderDTO orderDTO = new OrderDTO();
+        BeanUtils.copyProperties(orderMaster, orderDTO);
+        orderDTO.setOrderDetailList(orderDetails);
         return orderDTO;
     }
 }

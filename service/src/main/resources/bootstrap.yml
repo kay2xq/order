@@ -13,5 +13,27 @@ spring:
           group: order
           content-type: application/json
   redis:
-    host: 192.168.1.113
+    host: 192.168.1.109
     port: 6379
+  rabbitmq:
+      host: 192.168.1.109
+      port: 5672
+      username: kay
+      password: 123456
+# 以 RestTemplate 形式调用远程服务时的容错配置
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
+    getProductInfo:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+# feign 结合hystrix 服务降级
+feign:
+  hystrix:
+    enabled: true

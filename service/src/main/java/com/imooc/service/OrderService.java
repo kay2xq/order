@@ -8,4 +8,11 @@ import com.imooc.dto.OrderDTO;
 public interface OrderService {
 
     OrderDTO create(OrderDTO orderDTO);
+
+    /**
+     * 订单完单
+     * @param orderId
+     * @return
+     */
+    OrderDTO finish(String orderId);
 }
