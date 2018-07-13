@@ -20,14 +20,25 @@ spring:
       port: 5672
       username: kay
       password: 123456
-# 以 RestTemplate 形式调用远程服务时的容错配置
+# zipkin监控中心配置
+  zipkin:
+    base-url: http://192.168.1.109:9411/
+# 如果项目里引用了RabbitMQ依赖，会把数据发送到mq， 不会通过http方式发到zipkin服务端了（RABBIT, KAFKA, WEB;） 解决方案配置成web
+    sender:
+      type: web
+# 展现监控数据抽样百分比
+  sleuth:
+    sampler:
+      probability: 1
+# 全局默认的等待服务返回时间
 hystrix:
   command:
     default:
       execution:
         isolation:
           thread:
-            timeoutInMilliseconds: 1000
+            timeoutInMilliseconds: 10000
+# 方法名称为 getProductInfo 的方法等待服务时间
     getProductInfo:
       execution:
         isolation:
@@ -37,3 +48,9 @@ hystrix:
 feign:
   hystrix:
     enabled: true
+management:
+  context-path: /
+# 将org.springframework.cloud.openfeign包下的日子级别调整成debug
+logging:
+  level:
+    org.springframework.cloud.openfeign: debug
